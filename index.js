@@ -1,31 +1,37 @@
-import express from 'express';
-import fileUpload from 'express-fileupload';
-import { getFiles, uploadFile,getFile,downloadFile } from './s3.js';
-const app = express();
-app.use(fileUpload({
-    useTempFiles:true,
-    tempFileDir:'./uploads'
-}));
+import express from 'express'
+import fileUpload from 'express-fileupload'
+import { uploadFile, getFiles, getFile, downloadFile, getFileURL } from './s3.js'
 
-app.get('/',(req,res)=>{
-    res.json({message:'Welcome to server'});
-});
-app.get('/files/:fileName', async (req,res)=>{
-    const result = await getFile(req.params.fileName);
-    res.json(result.$metadata);
-});
-app.get('/downloadfile/:fileName', async (req,res)=>{
-    await downloadFile(req.params.fileName);
-    res.json({message: "Archivo descargado"});
-});
-app.post('/files', async (req,res)=>{
-    const result = await uploadFile(req.files.file)
-    res.json({result});
-});
+const app = express()
+
+app.use(fileUpload({
+    useTempFiles: true,
+    tempFileDir: './uploads'
+}))
+
 app.get('/files', async (req, res) => {
     const result = await getFiles()
     res.json(result.Contents)
 })
+
+app.get('/files/:fileName', async (req, res) => {
+    const result = await getFileURL(req.params.fileName)
+    res.json({
+        url: result
+    })
+})
+
+app.get('/downloadfile/:fileName', async (req, res) => {
+    await downloadFile(req.params.fileName)
+    res.json({message: "archivo descargado"})
+})
+
+
+app.post('/files', async (req, res) => {
+    const result = await uploadFile(req.files.file)
+    res.json({ result })
+})
+
 app.use(express.static('images'))
 const port = 3000;
 app.listen(port);
